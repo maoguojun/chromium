@@ -1,25 +1,20 @@
-name: Sync to Gitee
+name: Sync tag 141.0.7390.77 to Gitee
 on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:   # 手动触发按钮
-
+  workflow_dispatch:   # 仅手动触发
 jobs:
-  sync:
+  sync-tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0          # 完整历史
-      - name: Set up Git
+      - name: Checkout single tag (shallow)
         run: |
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Push to Gitee
+          git clone --branch 141.0.7390.77 --depth 1 \
+            https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+      - name: Push tag to Gitee
         env:
-          TOKEN: ${{ secrets.GITEE_TOKEN }}
-          USER:  ${{ secrets.GITEE_USER }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_USER: ${{ secrets.GITEE_USER }}
         run: |
-          git remote add gitee https://${USER}:${TOKEN}@gitee.com/${USER}/${{ github.event.repository.name }}.git
-          git push gitee --all --force
-          git push gitee --tags --force
+          # 把 Gitee 加为远程
+          git remote add gitee https://${GITEE_USER}:${GITEE_TOKEN}@gitee.com/${GITEE_USER}/chromium.git
+          # 推送该 tag（含对应 commit）
+          git push gitee 141.0.7390.77 --force
