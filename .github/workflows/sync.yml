@@ -1,22 +1,23 @@
 name: Sync tag 141.0.7390.77 to Gogs
 
 on:
-  workflow_dispatch:          # 仅手动触发，可改成 push 触发
+  workflow_dispatch:
 
 jobs:
-  sync-to-gogs:
+  mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout single tag (shallow)
-        run: |
-          git clone --branch 141.0.7390.77 --depth 1 \
-            https://${{ secrets.GITHUB_TOKEN }}@github.com/chromium/chromium.git .
-
-      - name: Push to Gogs
+      - name: Mirror single tag to Gogs
         env:
-          GOGS_USER: maoguojun          # Gogs 账号
-          GOGS_TOKEN: ${{ secrets.GOGS_TOKEN }}   # 在 GitHub 里先建好
+          GOGS_USER: maoguojun
+          GOGS_TOKEN: ${{ secrets.GOGS_TOKEN }}
         run: |
+          # 1. 裸克隆指定 tag（无工作目录，体积骤减）
+          git clone --mirror --filter=blob:none \
+            --branch 141.0.7390.77 \
+            https://${{ secrets.GITHUB_TOKEN }}@github.com/chromium/chromium.git mirror
+          cd mirror
+
+          # 2. 加 Gogs 远程并强推
           git remote add gogs http://${GOGS_USER}:${GOGS_TOKEN}@110.16.79.210:39816/maoguojun/chromium.git
-          # 推送 tag（含对应 commit）
           git push gogs 141.0.7390.77 --force
