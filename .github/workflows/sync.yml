@@ -1,28 +1,24 @@
-name: Sync tag 141.0.7390.77 to Gogs
+name: Stream tag 141.0.7390.77 to Gogs
 
 on:
   workflow_dispatch:
 
 jobs:
-  mirror:
+  stream:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch single tag and push to Gogs
+      - name: Push tag without local checkout
         env:
           GOGS_USER: maoguojun
           GOGS_TOKEN: ${{ secrets.GOGS_TOKEN }}
         run: |
-          # 1. 建空裸库
-          git init --bare mirror
-          cd mirror
+          # 建一个空目录即可，不拉文件
+          mkdir tmp && cd tmp
+          git init --bare
 
-          # 2. 加远端并只抓指定 tag
-          git remote add github https://${{ secrets.GITHUB_TOKEN }}@github.com/chromium/chromium.git
-          git fetch github tag 141.0.7390.77 --no-tags
-
-          # 3. 把该 tag 写成分支方便推送（可选，可省）
-          git update-ref refs/heads/141.0.7390.77 FETCH_HEAD
-
-          # 4. 加 Gogs 远程并强推
+          # 流式抓取指定 tag（对象边走边传）
+          git remote add gh https://${{ secrets.GITHUB_TOKEN }}@github.com/chromium/chromium.git
           git remote add gogs http://${GOGS_USER}:${GOGS_TOKEN}@110.16.79.210:39816/maoguojun/chromium.git
+
+          git fetch gh tag 141.0.7390.77 --no-tags
           git push gogs 141.0.7390.77 --force
